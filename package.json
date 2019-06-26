@@ -1,13 +1,14 @@
 {
   "name": "svgfont",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "description": "",
   "bin": {
-  	"svgfont": "bin/svgfont"
+    "svgfont": "bin/svgfont"
   },
   "dependencies": {
     "coffeescript": "^2.4.1",
     "commander": "^2.20.0",
+    "fs-extra": "^7.0.1",
     "svg2ttf": "^4.2.0",
     "svgicons2svgfont": "^9.0.4",
     "ttf2woff": "^2.0.1"

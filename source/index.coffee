@@ -26,23 +26,7 @@ SvgIcons2SvgFont = require 'svgicons2svgfont'
 svg2ttf = require 'svg2ttf'
 ttf2woff = require 'ttf2woff'
 
-options = require './options'
-
-# 
-resolveName = (file)->
-  matches = file.match options.regexp
-  return matches[1] if matches and matches[1]
-  return file.replace(/\..+$/, '')
-    .replace /[._@$!%^&*()+=?\s]+/, '-'
-
-# 找到目录下满足 filter 的文件
-# 不递规，因为可能会引起命名冲突
-findSvgs = (dir)->
-  fs.readdir(dir)
-  .then (files)-> files.filter options.filter
-  .then (files)-> files.map (file)->
-    file: path.resolve dir, file
-    name: resolveName file
+generatePreview = require './preview'
 
 class FontStream extends Writable
   constructor: ()->
@@ -110,14 +94,43 @@ icon.font.#{name}::before {
 }
 """
 
-findSvgs options.svgdir
-.then (files)->
-  fontStream = new FontStream
-  files.forEach (file)-> fontStream.append file
-  return fontStream.next()
-.then ({buffer, metadata, name})->
-  ttf = svg2ttf buffer.toString(), {}
-  woff = ttf2woff ttf.buffer, {}
-  generateStyleSheet name, metadata, woff.buffer
-.then (style)->
-  fs.writeFile options.output, style
+main = (options)->
+  resolveName = (file)->
+    matches = file.match options.regexp
+    return matches[1] if matches and matches[1]
+    return file.replace(/\..+$/, '')
+      .replace /[._@$!%^&*()+=?\s]+/, '-'
+
+  # 找到目录下满足 filter 的文件
+  # 不递规，因为可能会引起命名冲突
+  findSvgs = (dir)->
+    fs.readdir(dir)
+    .then (files)-> files.filter options.filter or (()-> true)
+    .then (files)-> files.map (file)->
+      file: path.resolve dir, file
+      name: resolveName file
+
+
+  return findSvgs options.svgdir
+    .then (files)->
+      fontStream = new FontStream
+      files.forEach (file)-> fontStream.append file
+      return fontStream.next()
+    .then ({buffer, metadata, name})->
+      ttf = svg2ttf buffer.toString(), {}
+      woff = ttf2woff ttf.buffer, {}
+      
+      style = generateStyleSheet name, metadata, woff.buffer
+      preview = generatePreview style, metadata if options.preview
+
+      return [style, preview]
+
+    .then ([style, preview])->
+      fs.mkdirpSync path.dirname options.output
+      fs.writeFile options.output, style
+
+      if options.preview
+        fs.mkdirpSync path.dirname options.preview
+        fs.writeFile options.preview, preview 
+
+module.exports = main

@@ -1,3 +1,7 @@
 #!/usr/bin/env node
 require('coffeescript/register');
-require('../source/index');
+
+var options = require('../source/options');
+
+var main = require('../source/index');
+main(options);

@@ -26,17 +26,20 @@ program
   .usage '[svgdir]'
   .option '-o, --output <string>', 'output file'
   .option '-f, --filter [string]', 'RegExp, only process matched svg file'
+  .option '-p, --preview [string]', 'Generate preview page, html.'
   .parse process.argv
 
 cwd = do process.cwd
 
 # 检参数
 output = program.output
-filter = program.filter || /(.+)\.svg$/i
+filter = program.filter or /(.+)\.svg$/i
+preview = program.preview
 svgdir = program.args[0]
 
 output = path.resolve cwd, output if output
 svgdir = path.resolve cwd, svgdir if svgdir
+preview = path.resolve cwd, preview if preview
 
 throw new Error "--output option is required." if not output
 throw new Error "svgdir is required" if not svgdir
@@ -48,6 +51,7 @@ throw new Error "svgdir is not a dir: #{svgdir}" if not stat.isDirectory()
 filter = new RegExp filter
 
 exports.output = output
-exports.svgdir = svgdir;
-exports.regexp = filter;
+exports.svgdir = svgdir
+exports.regexp = filter
+exports.preview = preview
 exports.filter = (file)-> filter.test path.basename file
